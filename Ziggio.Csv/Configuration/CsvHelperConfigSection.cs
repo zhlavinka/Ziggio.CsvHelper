@@ -4,9 +4,9 @@
 /// A class used to bind appsettings
 /// </summary>
 public class CsvConfigSection {
-  public CsvReaderConfigSection CsvReader { get; set; }
+  public CsvParserConfigSection CsvParser { get; set; }
 
-  public class CsvReaderConfigSection {
+  public class CsvParserConfigSection {
     public bool ContainsHeaderRow { get; set; }
     public string Delimiter { get; set; }
     public bool IgnoreRowsWithErrors { get; set; }

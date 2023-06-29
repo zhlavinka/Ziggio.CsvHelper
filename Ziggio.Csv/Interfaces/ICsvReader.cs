@@ -3,10 +3,10 @@
 namespace Ziggio.Csv;
 
 public interface ICsvReader : IDisposable {
-  ICsvReaderConfiguration Configuration { get; }
-  string? CurrentRecord { get; }
+  ICsvConfiguration Configuration { get; }
   ImmutableArray<string> Headers { get; }
-  string GetLine();
+
+  string? GetLine();
   string[] GetValues();
 }
 

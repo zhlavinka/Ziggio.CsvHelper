@@ -25,6 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Data\csvparser_mixed_data.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\food.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

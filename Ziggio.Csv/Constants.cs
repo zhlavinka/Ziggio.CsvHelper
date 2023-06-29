@@ -46,7 +46,7 @@ public static class Constants {
 
     public static string FieldValues(string quoteCharacter) => RegExCheat.NegativeLookbehind(@"[\w\s\""]")
       + RegExCheat.OneOrMoreTimes(quoteCharacter)
-      + "(.*?)"
+      + "((?!,).*?)"
       + RegExCheat.OneOrMoreTimes(quoteCharacter)
       + RegExCheat.NegativeLookahead(@"[\w\s\""]");
 

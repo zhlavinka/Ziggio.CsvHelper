@@ -5,53 +5,49 @@ using Ziggio.Csv.Extensions;
 
 namespace Ziggio.Csv;
 
-public class CsvReader : ICsvReader, IDisposable {
-  private readonly ICsvReaderConfiguration _configuration;
-  private ImmutableArray<string> _headers;
-  private readonly StreamReader _reader;
+public class CsvReader : ICsvReader {
+  private readonly ICsvConfiguration _configuration;
+  private readonly ICsvParser _parser;
+
   private bool _isInitialized;
 
   public CsvReader(
-    StreamReader streamReader
-  ) : this(new CsvReaderConfiguration(), streamReader) {
+    StreamReader streamReader) 
+    : this(new CsvConfiguration(), streamReader) {
 
   }
 
   public CsvReader(
-    ICsvReaderConfiguration configuration,
+    ICsvConfiguration configuration,
     StreamReader reader) {
-    _reader = reader;
-    _configuration = configuration;
 
-    _headers = ImmutableArray.Create<string>();
+    _configuration = configuration;
+    _parser = new CsvParser(_configuration, reader);
   }
 
-  public ICsvReaderConfiguration Configuration => _configuration;
+  public ICsvConfiguration Configuration => _configuration;
 
-  public string? CurrentRecord { get; private set; }
-
-  public ImmutableArray<string> Headers => _headers;
+  public ImmutableArray<string> Headers => _parser.Headers;
 
   public PropertyAtlas PropertyAtlas { get; set; } = new PropertyAtlas();
 
   public void Dispose() {
-    _reader.Dispose();
+    _parser?.Dispose();
   }
 
-  public string GetLine() {
-    if (!Read())
-      return null;
+  public string? GetLine() {
+    if (!_isInitialized)
+      Initialize();
 
-    return CurrentRecord;
+    return _parser.GetNextLine();
   }
 
   public string[] GetValues() {
-    if (!Read())
-      return null;
+    var line = GetLine();
 
-    CurrentRecord = PreMatchSanitize(CurrentRecord);
+    line = PreMatchSanitize(line);
 
-    var matches = Regex.Matches(CurrentRecord, _configuration.FieldValueRegx);
+    var matches = Regex.Matches(line, _configuration.FieldValueRegx);
 
     var values = new List<string>();
 
@@ -64,46 +60,13 @@ public class CsvReader : ICsvReader, IDisposable {
   }
 
   private void Initialize() {
-    if (Configuration.ContainsHeaderRow && _headers.Length == 0)
-      ParseHeaders();
+    if (!_parser.Parsed)
+      _parser.Parse();
 
     if (!PropertyAtlas.IsInitialized)
       SetupPropertyAtlas();
 
     _isInitialized = true;
-  }
-
-  private void ParseHeaders() {
-    var headerLine = _reader.ReadLine();
-    var matches = Regex.Matches(headerLine, Constants.RegEx.HeaderNames);
-
-    var headers = new string[matches.Count];
-    for (int i = 0; i < matches.Count; i++) {
-      var header = PostMatchSanitize(matches[i].Value);
-      headers[i] = header;
-    }
-
-    _headers = ImmutableArray.Create(headers);
-  }
-
-  private bool Read() {
-    if (!_isInitialized)
-      Initialize();
-
-    // get next line
-    var line = _reader.ReadLine();
-
-    if (string.IsNullOrEmpty(line)) {
-      CurrentRecord = null;
-      return false;
-    }
-
-    // remove leading/trailing white space
-    line = line.Trim();
-
-    CurrentRecord = line;
-
-    return true;
   }
 
   protected object StringToPrimitive(Type type, string value) {
@@ -163,7 +126,7 @@ public class CsvReader : ICsvReader, IDisposable {
   }
 
   private string PreMatchSanitize(string line) {
-    return Regex.Replace(CurrentRecord, "(\"){2,}(?!,)", "\"");
+    return Regex.Replace(line, "(\"){2,}(?!,)", "\"");
   }
 
   private string PostMatchSanitize(string value) {
@@ -180,10 +143,10 @@ public class CsvReader : ICsvReader, IDisposable {
   }
 
   private void SetupPropertyAtlas() {
-    for (int i = 0; i < _headers.Length; i++) {
+    for (int i = 0; i < _parser.Headers.Length; i++) {
       PropertyAtlas.Add(new PropertyMap {
         HeaderIndex = i,
-        HeaderName = _headers[i]
+        HeaderName = _parser.Headers[i]
       });
     }
   }
@@ -194,16 +157,16 @@ public class CsvReader<T> : CsvReader, ICsvReader<T> where T : class {
 
   public CsvReader(StreamReader streamReader) : base(streamReader) { }
 
-  public CsvReader(ICsvReaderConfiguration configuration, StreamReader streamReader) : base(configuration, streamReader) { }
+  public CsvReader(ICsvConfiguration configuration, StreamReader streamReader) : base(configuration, streamReader) { }
 
   public T GetRecord() {
     var values = GetValues();
 
-    if (values is null)
+    if (values is null || values.Length == 0)
       return default(T);
 
     if (!_isInitialized)
-      ParseModel();
+      Initialize();
 
     var instance = Activator.CreateInstance(typeof(T));
 
@@ -229,7 +192,7 @@ public class CsvReader<T> : CsvReader, ICsvReader<T> where T : class {
     return records;
   }
 
-  private void ParseModel() {
+  private void Initialize() {
     var propsWithCsvNameAttrs = typeof(T).GetProperties().Where(p => p.CustomAttributes.Any(ca => ca.AttributeType == typeof(CsvNameAttribute)));
 
     foreach (var prop in propsWithCsvNameAttrs) {

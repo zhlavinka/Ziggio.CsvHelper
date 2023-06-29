@@ -3,11 +3,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Ziggio.Csv.UnitTests.Models;
 
+using RegExConstants = Ziggio.Csv.Constants;
+using TestConstants = Ziggio.Csv.UnitTests.Constants;
+
 namespace Ziggio.Csv.UnitTests;
 
 [TestClass]
 public class CsvNameAttributeTests {
-  private Mock<ICsvReaderConfiguration> _mockConfiguration;
+  private Mock<ICsvConfiguration> _mockConfiguration;
 
   private FoodName _expectedFirstRecord => new FoodName {
     FdcId = 1105904,
@@ -18,19 +21,19 @@ public class CsvNameAttributeTests {
   };
 
   private FoodName _expectedLastRecord => new FoodName {
-    FdcId = 2516751,
-    DataType = "sub_sample_food",
-    Description = "chestnut flour",
+    FdcId = 388505,
+    DataType = "branded_food",
+    Description = "MORINAGA, MORI-NU, ORGANIC FIRM SILKEN TOFU",
     FoodCategoryId = null,
-    PublicationDate = new DateOnly(2023, 04, 20)
+    PublicationDate = new DateOnly(2019, 04, 01)
   };
 
   [TestInitialize]
   public void Initialize() {
-    _mockConfiguration = new Mock<ICsvReaderConfiguration>();
+    _mockConfiguration = new Mock<ICsvConfiguration>();
     _mockConfiguration.Setup(config => config.ContainsHeaderRow).Returns(true);
     _mockConfiguration.Setup(config => config.Delimiter).Returns(",");
-    _mockConfiguration.Setup(config => config.FieldValueRegx).Returns(Constants.RegEx.FieldValues("\""));
+    _mockConfiguration.Setup(config => config.FieldValueRegx).Returns(RegExConstants.RegEx.FieldValues(RegExConstants.RegExCheat.DoubleQuote));
     _mockConfiguration.Setup(config => config.IsCommaQuoteDelimited).Returns(true);
     _mockConfiguration.Setup(config => config.NewLine).Returns(Environment.NewLine);
     _mockConfiguration.Setup(config => config.QuoteCharacter).Returns("\"");
@@ -38,13 +41,9 @@ public class CsvNameAttributeTests {
   }
 
   [TestMethod]
-  [DataRow("food.csv")]
+  [DataRow(TestConstants.TestFiles.Food)]
   public void CsvReader_GetRecord_UsesCsvNameAttributeCorrectly(string file) {
-    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", file);
-
-    var fileInfo = new FileInfo(filePath);
-
-    fileInfo.Exists.Should().BeTrue();
+    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);
@@ -61,13 +60,9 @@ public class CsvNameAttributeTests {
   }
 
   [TestMethod]
-  [DataRow("food.csv")]
+  [DataRow(TestConstants.TestFiles.Food)]
   public void CsvReader_GetRecords_UsesCsvNameAttributeCorrectly(string file) {
-    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", file);
-
-    var fileInfo = new FileInfo(filePath);
-
-    fileInfo.Exists.Should().BeTrue();
+    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);

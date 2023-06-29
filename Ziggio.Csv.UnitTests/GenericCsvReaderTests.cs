@@ -3,18 +3,21 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Ziggio.Csv.UnitTests.Models;
 
+using RegExConstants = Ziggio.Csv.Constants;
+using TestConstants = Ziggio.Csv.UnitTests.Constants;
+
 namespace Ziggio.Csv.UnitTests;
 
 [TestClass]
 public class GenericCsvReaderTests {
-  private Mock<ICsvReaderConfiguration> _mockConfiguration;
+  private Mock<ICsvConfiguration> _mockConfiguration;
 
   [TestInitialize]
   public void Initialize() {
-    _mockConfiguration = new Mock<ICsvReaderConfiguration>();
+    _mockConfiguration = new Mock<ICsvConfiguration>();
     _mockConfiguration.Setup(config => config.ContainsHeaderRow).Returns(true);
     _mockConfiguration.Setup(config => config.Delimiter).Returns(",");
-    _mockConfiguration.Setup(config => config.FieldValueRegx).Returns(Constants.RegEx.FieldValues);
+    _mockConfiguration.Setup(config => config.FieldValueRegx).Returns(RegExConstants.RegEx.FieldValues(RegExConstants.RegExCheat.DoubleQuote));
     _mockConfiguration.Setup(config => config.IsCommaQuoteDelimited).Returns(true);
     _mockConfiguration.Setup(config => config.NewLine).Returns(Environment.NewLine);
     _mockConfiguration.Setup(config => config.QuoteCharacter).Returns("\"");
@@ -24,11 +27,7 @@ public class GenericCsvReaderTests {
   [TestMethod]
   [DataRow("measure_unit_w_header_row.csv")]
   public void CsvReader_FirstGetRecord_ReturnsInstance(string file) {
-    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", file);
-
-    var fileInfo = new FileInfo(filePath);
-
-    fileInfo.Exists.Should().BeTrue();
+    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);
@@ -45,11 +44,7 @@ public class GenericCsvReaderTests {
   [TestMethod]
   [DataRow("measure_unit_w_header_row.csv")]
   public void CsvReader_ReadAllRecords(string file) {
-    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Data", file);
-
-    var fileInfo = new FileInfo(filePath);
-
-    fileInfo.Exists.Should().BeTrue();
+    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);
