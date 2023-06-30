@@ -38,23 +38,10 @@ public static class Constants {
       + RegExCheat.FieldQuote;
 
     // (?<![\s\w])\"+((?!,).*?)\"+(?![\s\w\"])
-    public static string DefaultFieldValues = RegExCheat.NegativeLookbehind(@"[\w\s\""]")
-      + RegExCheat.OneOrMoreTimes(RegExCheat.DoubleQuote)
-      + "((?!,).*?)"
-      + RegExCheat.OneOrMoreTimes(RegExCheat.DoubleQuote)
-      + RegExCheat.NegativeLookahead(@"[\w\s\""]");
-
     public static string FieldValues(string quoteCharacter) => RegExCheat.NegativeLookbehind(@"[\w\s\""]")
       + RegExCheat.OneOrMoreTimes(quoteCharacter)
       + "((?!,).*?)"
       + RegExCheat.OneOrMoreTimes(quoteCharacter)
       + RegExCheat.NegativeLookahead(@"[\w\s\""]");
-
-    // (?<![\s\w])\"(.*?)\"(?![\s\w])
-    //public static string FieldValues = RegExCheat.NegativeLookbehind(@"[\w\s]")
-    //  + RegExCheat.FieldQuote
-    //  + RegExCheat.FieldValue
-    //  + RegExCheat.FieldQuote
-    //  + RegExCheat.NegativeLookahead(@"[\w\s]");
   }
 }

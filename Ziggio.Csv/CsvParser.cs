@@ -103,7 +103,7 @@ public class CsvParser : ICsvParser {
       Parsed = true;
 
       // throw if bad data found
-      if (_configuration.ThrowErrorOnBadData) {
+      if (_configuration.ThrowErrorOnBadData && ErrorRows.Count > 0) {
         throw new BadDataException(ErrorRows);
       }
     }

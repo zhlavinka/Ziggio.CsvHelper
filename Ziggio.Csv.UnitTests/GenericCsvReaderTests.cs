@@ -26,7 +26,7 @@ public class GenericCsvReaderTests {
   }
 
   [TestMethod]
-  [DataRow("measure_unit_w_header_row.csv")]
+  [DataRow(TestConstants.TestFiles.MeasureUnitWithHeaders)]
   public void CsvReader_FirstGetRecord_ReturnsInstance(string file) {
     var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
 
@@ -43,7 +43,7 @@ public class GenericCsvReaderTests {
   }
 
   [TestMethod]
-  [DataRow("measure_unit_w_header_row.csv")]
+  [DataRow(TestConstants.TestFiles.MeasureUnitWithHeaders)]
   public void CsvReader_ReadAllRecords(string file) {
     var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
 
@@ -65,6 +65,3 @@ public class GenericCsvReaderTests {
     spotCheck.Abbreviation.Should().BeEquivalentTo(default);
   }
 }
-
-// needed tests
-// - a csv record with random tab or new line character in middle

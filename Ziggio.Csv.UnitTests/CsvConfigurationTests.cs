@@ -22,7 +22,7 @@ public class CsvConfigurationTests {
   [DataRow(TestConstants.TestFiles.MeasureUnitWithHeaders, false, new string[] { "\"1000\"", "\"cup\"" })]
   public void Configuration_RemoveFieldQuotes(string file, bool removeFieldQuotes, string[] expectedValues) {
     // arrange
-    SetupOptions(removeFieldQuotes: removeFieldQuotes, throwErrorOnBadData: false);
+    SetupOptions(removeFieldQuotes: removeFieldQuotes);
     SetupCsvReader(file);
 
     // act
@@ -41,7 +41,7 @@ public class CsvConfigurationTests {
   [DataRow(TestConstants.TestFiles.MeasureUnitNoHeaders, new string[] { })]
   public void Configuration_ContainsHeaders(string file, string[] headers) {
     // arrange
-    SetupOptions(containsHeaderRow: headers.Length > 0, throwErrorOnBadData: false);
+    SetupOptions(containsHeaderRow: headers.Length > 0);
     SetupCsvParser(file);
 
     // act
