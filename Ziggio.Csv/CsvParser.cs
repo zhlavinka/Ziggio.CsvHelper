@@ -11,15 +11,19 @@ public class CsvParser : ICsvParser {
   private bool _isInitialized;
   private readonly StreamReader _reader;
 
+  private int _fieldCountAvg = 0;
+  private int _fieldCountTotal = 0;
+  private int _fieldRowsCounted = 0;
+
   public string? CurrentLine { get; private set; }
 
-  public Dictionary<int, string> ErrorRows { get; private set; } = new Dictionary<int, string>();
+  public Dictionary<int, string> ErrorRows { get; private set; } = new();
 
   public ImmutableArray<string> Headers => _headers;
 
   public bool Parsed { get; private set; } = false;
 
-  public Dictionary<int, string> ValidRows { get; private set; } = new Dictionary<int, string>();
+  public Dictionary<int, string> ValidRows { get; private set; } = new();
 
   public string this[int index] {
     get {
@@ -87,9 +91,16 @@ public class CsvParser : ICsvParser {
       int index = 0;
       while (Read()) {
         var matches = Regex.Matches(CurrentLine, Constants.RegEx.FieldValues(_configuration.QuoteCharacter));
-        if (matches.Count == _headers.Length) {
+        // if contains header row, and num of matches == num of headers
+        if (_configuration.ContainsHeaderRow && matches.Count == _headers.Length) {
+          ValidRows.Add(index, CurrentLine);
+          TrackFieldCount(matches.Count);
+        }
+        // if no header and matches found
+        else if (TrackFieldCount(matches.Count)) {
           ValidRows.Add(index, CurrentLine);
         }
+        // something went wrong
         else {
           ErrorRows.Add(index, CurrentLine);
         }
@@ -146,6 +157,14 @@ public class CsvParser : ICsvParser {
       value = value.Remove(value.Length - 1, 1);
     }
     return value;
+  }
+
+  private bool TrackFieldCount(int fieldCount) {
+    _fieldCountTotal += fieldCount;
+    _fieldRowsCounted += 1;
+    _fieldCountAvg = (int)Math.Round((double)_fieldCountTotal / _fieldRowsCounted, 0);
+
+    return fieldCount == _fieldCountAvg;
   }
 
   #region IDisposable
