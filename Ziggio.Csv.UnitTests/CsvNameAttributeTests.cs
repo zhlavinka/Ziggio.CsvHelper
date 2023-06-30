@@ -34,16 +34,18 @@ public class CsvNameAttributeTests {
     _mockConfiguration.Setup(config => config.ContainsHeaderRow).Returns(true);
     _mockConfiguration.Setup(config => config.Delimiter).Returns(",");
     _mockConfiguration.Setup(config => config.FieldValueRegx).Returns(RegExConstants.RegEx.FieldValues(RegExConstants.RegExCheat.DoubleQuote));
+    _mockConfiguration.Setup(config => config.IgnoreBadData).Returns(true);
     _mockConfiguration.Setup(config => config.IsCommaQuoteDelimited).Returns(true);
     _mockConfiguration.Setup(config => config.NewLine).Returns(Environment.NewLine);
     _mockConfiguration.Setup(config => config.QuoteCharacter).Returns("\"");
     _mockConfiguration.Setup(config => config.RemoveFieldQuotes).Returns(true);
+    _mockConfiguration.Setup(config => config.ThrowErrorOnBadData).Returns(false);
   }
 
   [TestMethod]
   [DataRow(TestConstants.TestFiles.Food)]
   public void CsvReader_GetRecord_UsesCsvNameAttributeCorrectly(string file) {
-    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
+    var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);
@@ -60,9 +62,9 @@ public class CsvNameAttributeTests {
   }
 
   [TestMethod]
-  [DataRow(TestConstants.TestFiles.Food)]
+  [DataRow(TestConstants.TestFiles.FoodShort)]
   public void CsvReader_GetRecords_UsesCsvNameAttributeCorrectly(string file) {
-    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
+    var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);

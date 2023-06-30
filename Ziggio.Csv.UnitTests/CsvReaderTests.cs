@@ -17,6 +17,7 @@ public class CsvReaderTests {
     _mockConfiguration.Setup(config => config.ContainsHeaderRow).Returns(true);
     _mockConfiguration.Setup(config => config.Delimiter).Returns(",");
     _mockConfiguration.Setup(config => config.FieldValueRegx).Returns(RegExConstants.RegEx.FieldValues(RegExConstants.RegExCheat.DoubleQuote));
+    _mockConfiguration.Setup(config => config.IgnoreBadData).Returns(true);
     _mockConfiguration.Setup(config => config.IsCommaQuoteDelimited).Returns(true);
     _mockConfiguration.Setup(config => config.NewLine).Returns(Environment.NewLine);
     _mockConfiguration.Setup(config => config.QuoteCharacter).Returns("\"");
@@ -27,7 +28,7 @@ public class CsvReaderTests {
   [DataRow(TestConstants.TestFiles.MeasureUnitWithHeaders, "1000", "cup")]
   [DataRow(TestConstants.TestFiles.Food, "1105904", "branded_food", "WESSON Vegetable Oil 1 GAL", "", "2020-11-13")]
   public void CsvReader_FirstGetValues_ReturnsStringArray(string file, params string[] expectedValues) {
-    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
+    var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);

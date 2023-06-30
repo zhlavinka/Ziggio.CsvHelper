@@ -43,13 +43,30 @@ public class CsvParser : ICsvParser {
     _isInitialized = false;
   }
 
-  public string? GetNextLine()
-  {
+  public string? GetNextLine() {
     if (!Parsed)
       throw new NotParsedException();
 
-    _currentIndex += 1;
+    // find next valid index
+    bool foundNextLine = false;
 
+    do {
+      _currentIndex += 1;
+
+      // need to return if at the end
+      if (_currentIndex >= (ValidRows.Count + ErrorRows.Count))
+        break;
+
+      // see if there is a valid row
+      if (ValidRows.ContainsKey(_currentIndex))
+        foundNextLine = true;
+      // otherwise, see if we want bad data and check for a bad row
+      else if (!_configuration.IgnoreBadData && ErrorRows.ContainsKey(_currentIndex))
+        foundNextLine = true;
+
+    } while (!foundNextLine);
+
+    // grab the current line
     CurrentLine = this[_currentIndex];
 
     return CurrentLine;
@@ -69,7 +86,8 @@ public class CsvParser : ICsvParser {
     if (!Parsed) {
       int index = 0;
       while (Read()) {
-        if (Regex.IsMatch(CurrentLine, Constants.RegEx.FieldValues(_configuration.QuoteCharacter))) {
+        var matches = Regex.Matches(CurrentLine, Constants.RegEx.FieldValues(_configuration.QuoteCharacter));
+        if (matches.Count == _headers.Length) {
           ValidRows.Add(index, CurrentLine);
         }
         else {
@@ -83,7 +101,25 @@ public class CsvParser : ICsvParser {
 
       // set parsed flag
       Parsed = true;
+
+      // throw if bad data found
+      if (_configuration.ThrowErrorOnBadData) {
+        throw new BadDataException(ErrorRows);
+      }
     }
+  }
+
+  private void ParseHeaders() {
+    var headerLine = _reader.ReadLine();
+    var matches = Regex.Matches(headerLine, Constants.RegEx.HeaderNames);
+
+    var headers = new string[matches.Count];
+    for (int i = 0; i < matches.Count; i++) {
+      var header = Sanitize(matches[i].Value);
+      headers[i] = header;
+    }
+
+    _headers = ImmutableArray.Create(headers);
   }
 
   private bool Read() {
@@ -102,28 +138,12 @@ public class CsvParser : ICsvParser {
     return true;
   }
 
-  private void ParseHeaders() {
-    var headerLine = _reader.ReadLine();
-    var matches = Regex.Matches(headerLine, Constants.RegEx.HeaderNames);
-
-    var headers = new string[matches.Count];
-    for (int i = 0; i < matches.Count; i++) {
-      var header = Sanitize(matches[i].Value);
-      headers[i] = header;
-    }
-
-    _headers = ImmutableArray.Create(headers);
-  }
-
   private string Sanitize(string value) {
-    if (_configuration.RemoveFieldQuotes
-        && Regex.IsMatch(value, _configuration.FieldValueRegx)) {
-      if (value.StartsWith("\"")) {
-        value = value.Remove(0, 1);
-      }
-      if (value.EndsWith("\"")) {
-        value = value.Remove(value.Length - 1, 1);
-      }
+    if (value.StartsWith("\"")) {
+      value = value.Remove(0, 1);
+    }
+    if (value.EndsWith("\"")) {
+      value = value.Remove(value.Length - 1, 1);
     }
     return value;
   }

@@ -5,6 +5,7 @@ namespace Ziggio.Csv;
 public class PropertyAtlas : IEnumerable<PropertyMap> {
   private readonly Dictionary<string, PropertyMap> _dictionary = new();
 
+  public int Count => _dictionary.Count;
   public bool IsInitialized { get; private set; } = false;
 
   public PropertyMap this[string name] {

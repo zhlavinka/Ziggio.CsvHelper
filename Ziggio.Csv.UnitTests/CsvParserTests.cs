@@ -17,6 +17,7 @@ public class CsvParserTests {
     _mockConfiguration.Setup(config => config.ContainsHeaderRow).Returns(true);
     _mockConfiguration.Setup(config => config.Delimiter).Returns(",");
     _mockConfiguration.Setup(config => config.FieldValueRegx).Returns(RegExConstants.RegEx.FieldValues(RegExConstants.RegExCheat.DoubleQuote));
+    _mockConfiguration.Setup(config => config.IgnoreBadData).Returns(true);
     _mockConfiguration.Setup(config => config.IsCommaQuoteDelimited).Returns(true);
     _mockConfiguration.Setup(config => config.NewLine).Returns(Environment.NewLine);
     _mockConfiguration.Setup(config => config.QuoteCharacter).Returns("\"");
@@ -24,12 +25,11 @@ public class CsvParserTests {
   }
 
   [TestMethod]
-  [DataRow(TestConstants.TestFiles.CsvParserMixedData)]
   [DataRow(TestConstants.TestFiles.Food)]
   [DataRow(TestConstants.TestFiles.MeasureUnitNoHeaders)]
   [DataRow(TestConstants.TestFiles.MeasureUnitWithHeaders)]
-  public void CsvParser_CanOpenFiles(string file) {
-    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
+  public void CsvParser_EnsureTestFiles(string file) {
+    var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
 
     using var fileStream = fileInfo.OpenRead();
 
@@ -39,7 +39,7 @@ public class CsvParserTests {
   [TestMethod]
   [DataRow(TestConstants.TestFiles.MeasureUnitWithHeaders)]
   public void CsvParser_CanParseHeaders(string file) {
-    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
+    var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);
@@ -53,7 +53,7 @@ public class CsvParserTests {
   [TestMethod]
   [DataRow(TestConstants.TestFiles.MeasureUnitWithHeaders)]
   public void CsvParser_HeadersCannotBeChanged(string file) {
-    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
+    var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);
@@ -69,11 +69,11 @@ public class CsvParserTests {
   }
 
   [TestMethod]
-  [DataRow(TestConstants.TestFiles.CsvParserMixedData, 1, "\"1105905\",\"branded_food\",\"SWANSON BROTH BEEF\",\"\",\"2020-11-13\"")]
-  [DataRow(TestConstants.TestFiles.CsvParserMixedData, 84396, "\"372849\",\"branded_food\",\"EL SERRANITO, COOKED HAM\",\"\",\"2019-04-01\"")]
-  [DataRow(TestConstants.TestFiles.CsvParserMixedData, 99998, "\"388505\",\"branded_food\",\"MORINAGA, MORI-NU, ORGANIC FIRM SILKEN TOFU\",\"\",\"2019-04-01\"")]
+  [DataRow(TestConstants.TestFiles.Food, 1, "\"1105905\",\"branded_food\",\"SWANSON BROTH BEEF\",\"\",\"2020-11-13\"")]
+  [DataRow(TestConstants.TestFiles.Food, 84396, "\"372849\",\"branded_food\",\"EL SERRANITO, COOKED HAM\",\"\",\"2019-04-01\"")]
+  [DataRow(TestConstants.TestFiles.Food, 99998, "\"388504\",\"branded_food\",\"TERIYAKI SAUCE\",\"\",\"2019-04-01\"")]
   public void CsvParser_Parse_WithHeaders_MatchExpected(string file, int expectedIndex, string expectedLine) {
-    var fileInfo = new FileInfo(TestConstants.TestFiles.GetFilePath(file));
+    var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
 
     using var fileStream = fileInfo.OpenRead();
     using var streamReader = new StreamReader(fileStream);
@@ -85,5 +85,20 @@ public class CsvParserTests {
 
     line.Should().NotBeNullOrEmpty();
     line.Should().BeEquivalentTo(expectedLine);
+  }
+
+  [TestMethod]
+  [DataRow(TestConstants.TestFiles.Food)]
+  public void CsvParser_WithHeaders_FlagsBadData(string file) {
+    var fileInfo = TestConstants.TestFiles.GetFileInfo(file);
+
+    using var fileStream = fileInfo.OpenRead();
+    using var streamReader = new StreamReader(fileStream);
+    using var csvParser = new CsvParser(_mockConfiguration.Object, streamReader);
+
+    csvParser.Parse();
+
+    csvParser.ValidRows.Count.Should().Be(99999);
+    csvParser.ErrorRows.Count.Should().Be(2);
   }
 }
